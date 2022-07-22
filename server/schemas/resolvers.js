@@ -5,9 +5,9 @@ const { signToken } = require("../utils/auth");
 const resolvers = {
   Query: {
     // get a single user by either their id or their username
-    async getSingleUser(parent, { user = null, params }) {
+    async getSingleUser(parent, params, context) {
       const foundUser = await User.findOne({
-        $or: [{ _id: user ? user._id : params.id }, { username: params.username }],
+        $or: [{ _id: context.user ? context.user._id : params.id }, { username: params.username }],
       });
   
       if (!foundUser) {
@@ -33,6 +33,10 @@ const resolvers = {
     // login a user, sign a token, and send it back (to client/src/components/LoginForm.js)
     // {body} is destructured req.body
     login: async (parent, args) => {
+      if (!args.username && !args.email) {
+        throw new ApolloError ('No email or username provided');
+      }
+
       const user = await User.findOne({ $or: [{ username: args.username }, { email: args.email }] });
       if (!user) {
         throw new AuthenticationError ("Can't find this user");

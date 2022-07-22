@@ -3,20 +3,18 @@ const path = require('path');
 const db = require('./config/connection');
 const { ApolloServer } = require('apollo-server-express');
 const { typeDefs, resolvers } = require('./schemas');
-const { authMiddleWare } = require('./utils/auth');
-
-// const routes = require('./routes');
+const { authMiddleware } = require('./utils/auth');
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: authMiddleWare
+  context: authMiddleware
 })
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // if we're in production, serve client/build as static assets
@@ -25,9 +23,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // TEMPORARILY COMMENT OUT TO USE APOLLO SANDBOX LOCALLY
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build/index.html'));
-});
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client/build/index.html'));
+// });
 
 
 // Create a new instance of an Apollo server with the GraphQL schema
