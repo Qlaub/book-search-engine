@@ -1,77 +1,88 @@
-const { AuthenticationError } = require("apollo-server-express");
+const { ApolloError, AuthenticationError } = require("apollo-server-express");
 const { User } = require("../models");
 const { signToken } = require("../utils/auth");
 
 const resolvers = {
   Query: {
     // get a single user by either their id or their username
-    async getSingleUser({ user = null, params }, res) {
+    async getSingleUser(parent, { user = null, params }) {
       const foundUser = await User.findOne({
         $or: [{ _id: user ? user._id : params.id }, { username: params.username }],
       });
   
       if (!foundUser) {
-        return res.status(400).json({ message: 'Cannot find a user with this id!' });
+        throw new ApolloError ('Cannot find a user with this id!');
       }
   
-      res.json(foundUser);
+      return foundUser;
     },
   },
 
   Mutation: {
     // create a user, sign a token, and send it back (to client/src/components/SignUpForm.js)
-    async createUser({ body }, res) {
-      const user = await User.create(body);
+    createUser: async (parent, args) => {
+      const user = await User.create(args);
   
       if (!user) {
-        return res.status(400).json({ message: 'Something is wrong!' });
+        throw new ApolloError ('Something is wrong!');
       }
+
       const token = signToken(user);
-      res.json({ token, user });
+      return { token, user };
     },
     // login a user, sign a token, and send it back (to client/src/components/LoginForm.js)
     // {body} is destructured req.body
-    async login({ body }, res) {
-      const user = await User.findOne({ $or: [{ username: body.username }, { email: body.email }] });
+    login: async (parent, args) => {
+      const user = await User.findOne({ $or: [{ username: args.username }, { email: args.email }] });
       if (!user) {
-        return res.status(400).json({ message: "Can't find this user" });
+        throw new AuthenticationError ("Can't find this user");
       }
 
-      const correctPw = await user.isCorrectPassword(body.password);
+      const correctPw = await user.isCorrectPassword(args.password);
 
       if (!correctPw) {
-        return res.status(400).json({ message: 'Wrong password!' });
+        throw new AuthenticationError ('Wrong password!');
       }
+
       const token = signToken(user);
-      res.json({ token, user });
+      return { token, user };
     },
     // save a book to a user's `savedBooks` field by adding it to the set (to prevent duplicates)
     // user comes from `req.user` created in the auth middleware function
-    async saveBook({ user, body }, res) {
-      console.log(user);
-      try {
-        const updatedUser = await User.findOneAndUpdate(
-          { _id: user._id },
-          { $addToSet: { savedBooks: body } },
-          { new: true, runValidators: true }
-        );
-        return res.json(updatedUser);
-      } catch (err) {
-        console.log(err);
-        return res.status(400).json(err);
+    saveBook: async (parent, args, context) => {
+
+      if (context.user) {
+        try {
+          const updatedUser = await User.findOneAndUpdate(
+            { _id: context._id },
+            { $addToSet: { savedBooks: args } },
+            { new: true, runValidators: true }
+          );
+          return updatedUser;
+        } catch (err) {
+          console.log(err);
+          throw new ApolloError ('Something went wrong');
+        }
       }
+      
+      throw new AuthenticationError ('You need to be logged in');
     },
     // remove a book from `savedBooks`
-    async deleteBook({ user, params }, res) {
-      const updatedUser = await User.findOneAndUpdate(
-        { _id: user._id },
-        { $pull: { savedBooks: { bookId: params.bookId } } },
-        { new: true }
-      );
-      if (!updatedUser) {
-        return res.status(404).json({ message: "Couldn't find user with this id!" });
+    deleteBook: async (parent, { bookId }, context) => {
+
+      if (context. user) {
+        const updatedUser = await User.findOneAndUpdate(
+          { _id: context._id },
+          { $pull: { savedBooks: { bookId } } },
+          { new: true }
+        );
+        if (!updatedUser) {
+          throw new ApolloError ("Couldn't find user with this id!");
+        }
+        return updatedUser;
       }
-      return res.json(updatedUser);
+      
+      throw new AuthenticationError ('You need to be logged in');
     },
   }
 };
