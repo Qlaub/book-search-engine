@@ -1,7 +1,11 @@
-# Book Search Engine
+# [Book Search Engine](https://qlaub-book-search.herokuapp.com/)
 
 ## Description
-A MERN stack Google Books API search engine that was built with a RESTful API that I then refactored to be a GraphQL API built with Apollo Server. After you sign up/login as a user, you can search for books and then save and delete them as you please.
+A MERN stack Google Books API search engine I refactored to be a GraphQL API built with Apollo Server. The original project was built with a RESTful API. After you sign up/login as a user, you can search for books and then save and delete them as you please.
+
+[Click Here](https://qlaub-book-search.herokuapp.com/) to view the web application
+
+[![Google Books Engine Screenshot](https://user-images.githubusercontent.com/89796902/180392486-c07a030c-2b90-4e27-947f-aa21c1386044.jpg)](https://qlaub-book-search.herokuapp.com/ "Click to open website")
 
 ## Table of Contents
 - [Installation](#installation)
