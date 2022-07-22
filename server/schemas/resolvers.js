@@ -27,7 +27,7 @@ const resolvers = {
         throw new ApolloError ('Something is wrong!');
       }
 
-      const token = signToken(user);
+      const token = signToken(user)
       return { token, user };
     },
     // login a user, sign a token, and send it back (to client/src/components/LoginForm.js)
@@ -54,11 +54,10 @@ const resolvers = {
     // save a book to a user's `savedBooks` field by adding it to the set (to prevent duplicates)
     // user comes from `req.user` created in the auth middleware function
     saveBook: async (parent, args, context) => {
-
       if (context.user) {
         try {
           const updatedUser = await User.findOneAndUpdate(
-            { _id: context._id },
+            { _id: context.user._id },
             { $addToSet: { savedBooks: args } },
             { new: true, runValidators: true }
           );
@@ -76,7 +75,7 @@ const resolvers = {
 
       if (context. user) {
         const updatedUser = await User.findOneAndUpdate(
-          { _id: context._id },
+          { _id: context.user._id },
           { $pull: { savedBooks: { bookId } } },
           { new: true }
         );
